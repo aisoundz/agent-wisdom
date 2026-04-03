@@ -2334,3 +2334,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const daysSinceFirst = Math.floor((Date.now() - firstSession) / 86400000);
     const lastReviewKey = 'aw_last_review';
     let lastReview = 
+0;
+    try { lastReview = parseInt(localStorage.getItem(lastReviewKey) || '0'); } catch(e) {}
+    const daysSinceReview = Math.floor((Date.now() - lastReview) / 86400000);
+    if (daysSinceFirst >= 7 && daysSinceReview >= 7) {
+      try { localStorage.setItem(lastReviewKey, Date.now().toString()); } catch(e) {}
+      generate30DayReview();
+    }
+  }
+});
+</script>
+</body>
+</html>
