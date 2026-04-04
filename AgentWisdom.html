@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Agent Wisdom</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F5F0;--surface:#fff;--surface2:#F0EDE6;
+  --text:#1A1815;--text2:#6B6760;--text3:#A09D99;
+  --accent:#2D4A3E;--accent-light:#E8F0EC;
+  --border:rgba(26,24,21,0.1);
+  --red:#C0392B;--red-light:#FDECEA;
+  --green:#1A6B3A;--green-light:#E8F5EE;
+  --gold:#B8860B;--gold-light:#FFF8E7;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:4rem}
+.wrap{width:100%;max-width:680px;padding:0 1rem}
+
+/* API KEY BANNER */
+.key-banner{background:#1a1a2e;color:#00d4aa;font-family:monospace;font-size:13px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%}
+.key-banner input{flex:1;min-width:200px;font-family:monospace;font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid #00d4aa;background:#0d0d1a;color:#00d4aa;outline:none}
+.key-banner button{font-family:monospace;font-size:12px;padding:6px 14px;border-radius:6px;border:none;background:#00d4aa;color:#0d0d1a;cursor:pointer;font-weight:bold}
+.key-banner .status{font-size:11px;padding:3px 8px;border-radius:99px;background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3)}
+.key-banner.active .status{background:rgba(0,212,170,0.3);border-color:#00d4aa}
+
+/* HEADER */
+.header{padding:1.5rem 0 1rem}
+.header-inner{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.header-text{text-align:center;flex:1}
+.time-lbl{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.logo{font-family:'DM Serif Display',serif;font-size:34px;color:var(--text)}
+.logo em{color:var(--accent);font-style:italic}
+.sub-lbl{font-size:13px;color:var(--text2);margin-top:4px}
+.pill{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-light);padding:3px 10px;border-radius:99px}
+
+/* HAMBURGER */
+.hamburger{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;margin-top:4px}
+.hamburger span{display:block;width:16px;height:1.5px;background:var(--text2);border-radius:2px}
+
+/* SIDE MENU */
+.overlay{position:fixed;inset:0;background:rgba(26,24,21,0.4);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.overlay.open{opacity:1;pointer-events:all}
+.side-menu{position:fixed;top:0;right:0;bottom:0;width:280px;background:var(--surface);z-index:201;transform:translateX(100%);transition:transform 0.28s ease;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,0.12)}
+.side-menu.open{transform:translateX(0)}
+.sm-header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.sm-logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text)}
+.sm-logo em{color:var(--accent);font-style:italic}
+.sm-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:16px;color:var(--text2)}
+.sm-nav{flex:1;padding:0.75rem 0}
+.sm-item{width:100%;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;padding:14px 1.25rem;border:none;background:transparent;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:12px;text-align:left}
+.sm-item:hover{background:var(--surface2)}
+.sm-item .icon{font-size:18px;width:24px;text-align:center}
+.sm-item .arrow{margin-left:auto;color:var(--text3)}
+.sm-footer{padding:1.25rem;border-top:1px solid var(--border)}
+.sm-tagline{font-size:13px;color:var(--text2);font-style:italic;margin-bottom:4px}
+.sm-version{font-size:11px;color:var(--text3)}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:1.25rem}
+.tab{flex:1;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 4px;border-radius:8px;border:none;background:transparent;color:var(--text2);cursor:pointer;transition:all 0.15s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+
+/* PANELS */
+.panel{display:none}.panel.active{display:block}
+
+/* BRIEFING */
+.brief-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem;margin-bottom:1rem;position:relative;overflow:hidden}
+.brief-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent);border-radius:18px 18px 0 0}
+.brief-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.brief-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.brief-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text);margin-bottom:10px;line-height:1.3}
+.brief-body{font-size:14px;line-height:1.75;color:var(--text2)}
+.brief-loading{font-style:italic;color:var(--text3)}
+.brief-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn-sm{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s}
+.btn-sm:hover{background:var(--surface2)}
+.btn-sm.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-sm svg{width:13px;height:13px}
+.info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.info-title{font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.info-body{font-size:13px;color:var(--text2);line-height:1.8}
+.info-body strong{color:var(--text);font-weight:500}
+
+/* SESSION */
+.entry-label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem}
+.entry-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left;line-height:1.4;transition:all 0.15s;display:flex;flex-direction:column;gap:4px}
+.entry-btn:hover,.entry-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.entry-btn .e-icon{font-size:18px}
+.entry-btn .e-title{font-weight:500;font-size:13px}
+.entry-btn .e-desc{font-size:11px;color:var(--text3);font-weight:400}
+.entry-btn.full{grid-column:1/-1}
+.entry-btn.fire{border-color:rgba(184,134,11,0.3);background:#FFFDF5}
+.entry-btn.fire:hover,.entry-btn.fire.active{background:var(--gold-light);border-color:var(--gold);color:#6B5000}
+.fire-badge{font-size:10px;font-weight:500;color:var(--gold);background:var(--gold-light);padding:2px 7px;border-radius:99px;border:1px solid rgba(184,134,11,0.2);margin-left:4px}
+
+/* DISCLAIMER */
+.disclaimer{font-size:11px;color:var(--text3);text-align:center;line-height:1.6;margin-bottom:1rem}
+
+/* MEMORY BANNER */
+.memory-banner{background:var(--gold-light);border:1px solid rgba(184,134,11,0.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6B5000;display:none;align-items:center;gap:8px;line-height:1.5}
+.memory-banner.show{display:flex}
+
+/* MODE BANNER */
+.mode-banner{background:var(--accent-light);border:1px solid var(--accent);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--accent);font-weight:500;display:none;align-items:center;gap:8px}
+.mode-banner.show{display:flex}
+
+/* CHAT */
+.chat{background:var(--surface);border:1px solid var(--border);border-radius:18px;min-height:300px;max-height:460px;overflow-y:auto;padding:1.5rem;margin-bottom:1rem;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;margin-top:2px}
+.msg.agent .av{background:var(--accent-light);color:var(--accent)}
+.msg.user .av{background:var(--surface2);color:var(--text2)}
+.bubble{max-width:83%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.7;color:var(--text)}
+.msg.agent .bubble{background:var(--surface2);border-bottom-left-radius:4px}
+.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.ctag{display:inline-block;font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:99px;margin-bottom:8px}
+.btext{margin-bottom:10px}
+.bq{font-size:13px;color:var(--text2);border-top:1px solid rgba(26,24,21,0.08);padding-top:10px;font-style:italic;line-height:1.6}
+.dots{display:flex;gap:4px;align-items:center;padding:6px 2px}
+.dots span{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:dot 1.3s infinite ease-in-out}
+.dots span:nth-child(2){animation-delay:0.18s}
+.dots span:nth-child(3){animation-delay:0.36s}
+@keyframes dot{0%,80%,100%{transform:translateY(0);opacity:0.4}40%{transform:translateY(-6px);opacity:1}}
+
+/* CONTROLS */
+.controls{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.mic-btn{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.mic-btn.recording{background:var(--red-light);border-color:var(--red);animation:pulse 1.2s infinite}
+.mic-btn.speaking{background:var(--red-light);border-color:var(--red)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,0.3)}70%{box-shadow:0 0 0 10px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+.mic-btn svg{width:20px;height:20px;color:var(--text2)}
+.mic-btn.recording svg,.mic-btn.speaking svg{color:var(--red)}
+.input-wrap{flex:1;display:flex;gap:8px}
+.input-wrap input{flex:1;font-family:'DM Sans',sans-serif;font-size:14px;padding:12px 16px;border-radius:25px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;transition:border-color 0.15s}
+.input-wrap input:focus{border-color:var(--accent)}
+.input-wrap input::placeholder{color:var(--text3)}
+.send-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:12px 20px;border-radius:25px;border:none;background:var(--accent);color:#fff;cursor:pointer}
+.voice-hint{font-size:12px;color:var(--text3);text-align:center;min-height:18px;margin-bottom:0.75rem}
+.end-btn{display:block;width:100%;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;text-align:center;margin-top:0.5rem}
+.end-btn:hover{background:var(--surface2)}
+
+/* SUMMARY */
+.summary{display:none;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.75rem;margin-top:1.25rem}
+.sum-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px}
+.sum-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text)}
+.sum-date{font-size:12px;color:var(--text3)}
+.score-block{display:flex;align-items:flex-start;gap:14px;margin-bottom:1.5rem;padding:1.25rem;background:var(--accent-light);border-radius:14px}
+.score-n{font-family:'DM Serif Display',serif;font-size:58px;color:var(--accent);line-height:1;flex-shrink:0}
+.score-meta{flex:1;display:flex;flex-direction:column;gap:4px}
+.score-delta{font-size:15px;font-weight:500;color:var(--accent)}
+.score-lbl{font-size:12px;color:var(--text3)}
+.score-stage{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;margin-top:4px;width:fit-content}
+.score-stage.initial{background:#FFF3CD;color:#856404}
+.score-stage.building{background:#D1ECF1;color:#0C5460}
+.score-stage.established{background:var(--green-light);color:var(--green)}
+.score-why{font-size:13px;color:var(--text2);margin-top:6px;line-height:1.5;font-style:italic}
+.score-note{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;font-style:italic;border-top:1px solid rgba(26,24,21,0.06);padding-top:8px}
+.sum-section{margin-bottom:1.25rem}
+.slbl{font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.slbl::before{content:'';display:inline-block;width:3px;height:10px;background:var(--accent);border-radius:2px}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px}
+.concept-pill{font-size:12px;padding:4px 12px;border-radius:99px;background:var(--accent-light);color:var(--accent);font-weight:500}
+.did-well{background:var(--green-light);border:1px solid rgba(26,107,58,0.2);border-radius:10px;padding:12px 16px;font-size:14px;color:#0D4A1F;line-height:1.65}
+.pattern{background:var(--gold-light);border:1px solid rgba(184,134,11,0.2);border-radius:10px;padding:12px 16px;font-size:14px;color:#6B5000;line-height:1.65}
+.reflect{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:14px 16px;font-size:14px;font-style:italic;color:var(--text2);line-height:1.7}
+.saved-note{font-size:12px;color:var(--accent);display:flex;align-items:center;gap:6px;margin-top:1rem}
+.new-session-btn{display:block;width:100%;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;text-align:center;margin-top:1rem}
+
+/* VAULT */
+.vault-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--text);margin-bottom:8px}
+.vault-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1.5rem}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;text-align:center}
+.stat-n{font-family:'DM Serif Display',serif;font-size:28px;color:var(--accent)}
+.stat-l{font-size:11px;color:var(--text3);margin-top:2px}
+.session-list{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem;max-height:320px;overflow-y:auto}
+.si{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.si-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.si-date{font-size:12px;color:var(--text3)}
+.si-mode{font-size:11px;font-weight:500;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:99px}
+.si-score{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px}
+.si-well{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:5px}
+.si-pills{display:flex;flex-wrap:wrap;gap:4px}
+.si-pill{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--surface2);color:var(--text2)}
+.empty-vault{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:14px;line-height:1.7}
+.dl-row{display:flex;gap:8px;flex-wrap:wrap}
+.dl-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:10px 18px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.15s}
+.dl-btn:hover{background:var(--surface2)}
+.dl-btn.accent{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dl-btn.danger{color:var(--red)}
+.dl-btn.danger:hover{background:var(--red-light)}
+
+/* PRICING */
+.pricing-hero{text-align:center;padding:1.5rem 0 1rem}
+.pricing-hero h2{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);margin-bottom:8px}
+.pricing-hero p{font-size:14px;color:var(--text2);line-height:1.6}
+.beta-badge{display:inline-block;font-size:11px;font-weight:500;background:#FFF3CD;color:#856404;border:1px solid rgba(133,100,4,0.2);padding:3px 10px;border-radius:99px;margin-bottom:12px}
+.plan-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:1.25rem}
+.plan-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:1.5rem;position:relative;overflow:hidden}
+.plan-card.featured{border:2px solid var(--accent)}
+.plan-card.featured::before{content:'Most Popular';position:absolute;top:14px;right:14px;font-size:10px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;color:var(--accent);background:var(--accent-light);padding:3px 8px;border-radius:99px}
+.plan-name{font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.plan-price{font-family:'DM Serif Display',serif;font-size:36px;color:var(--text);margin-bottom:4px;line-height:1}
+.plan-price span{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text2);font-weight:400}
+.plan-desc{font-size:13px;color:var(--text2);margin-bottom:1rem;line-height:1.5}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:7px;margin-bottom:1.25rem}
+.plan-features li{font-size:13px;color:var(--text);padding-left:18px;position:relative;line-height:1.5}
+.plan-features li::before{content:'✓';position:absolute;left:0;color:var(--accent);font-weight:600}
+.plan-features li.no::before{content:'✗';color:var(--text3)}
+.plan-features li.no{color:var(--text3)}
+.plan-btn{display:block;width:100%;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:12px;border-radius:10px;border:none;cursor:pointer;text-align:center;transition:all 0.15s;text-decoration:none}
+.plan-btn.free{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.plan-btn.pro{background:var(--accent);color:#fff}
+.plan-btn.pro:hover,.plan-btn.elite:hover{opacity:0.88}
+.plan-btn.elite{background:#1a1a2e;color:#fff}
+.pricing-note{font-size:12px;color:var(--text3);text-align:center;line-height:1.6}
+.pricing-note a{color:var(--accent);text-decoration:none}
+
+/* FEEDBACK */
+.feedback-hero{text-align:center;padding:1.25rem 0 1rem}
+.feedback-hero h2{font-family:'DM Serif Display',serif;font-size:24px;color:var(--text);margin-bottom:8px}
+.feedback-hero p{font-size:14px;color:var(--text2);line-height:1.6}
+.feedback-why{background:var(--accent-light);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.feedback-why-title{font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.feedback-why-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.feedback-why-list li{font-size:13px;color:var(--text2);padding-left:16px;position:relative;line-height:1.5}
+.feedback-why-list li::before{content:'→';position:absolute;left:0;color:var(--accent)}
+.feedback-embed{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:1rem}
+.quick-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem}
+.quick-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px}
+.quick-desc{font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.rating-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.rating-btn{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all 0.15s}
+.rating-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.feedback-text{width:100%;font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none;resize:vertical;min-height:80px;margin-bottom:10px}
+.submit-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:9px 20px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;width:100%}
+.thanks{font-size:13px;color:var(--accent);margin-top:8px;text-align:center;display:none}
+
+/* SETTINGS */
+.set-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem}
+.set-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:3px}
+.set-desc{font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.set-row{display:flex;gap:8px;align-items:center}
+.set-row input{flex:1;font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none}
+.set-save{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;cursor:pointer;white-space:nowrap}
+.set-ok{font-size:12px;color:var(--accent);margin-top:6px;display:none}
+.set-hint{font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5}
+.set-hint a{color:var(--accent);text-decoration:none}
+.voice-select{width:100%;font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);outline:none;cursor:pointer;margin-bottom:10px}
+.lang-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.lang-btn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:5px 10px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all 0.15s}
+.lang-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.speed-row{display:flex;gap:6px;margin-bottom:12px}
+.speed-btn{flex:1;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all 0.15s;text-align:center}
+.speed-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.length-row{display:flex;gap:6px}
+.length-btn{flex:1;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:9px 6px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all 0.15s;text-align:center;line-height:1.3}
+.length-btn small{display:block;font-size:10px;font-weight:400;opacity:0.7;margin-top:2px}
+.length-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.preview-btn{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:9px 18px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all 0.15s}
+.preview-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+.preview-btn.playing{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.manifesto{background:var(--accent);color:#fff;border-radius:14px;padding:1.5rem;margin-top:1rem}
+.manifesto h3{font-family:'DM Serif Display',serif;font-size:19px;margin-bottom:0.75rem}
+.manifesto ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.manifesto li{font-size:13px;line-height:1.6;padding-left:16px;position:relative;opacity:0.9}
+.manifesto li::before{content:'→';position:absolute;left:0;opacity:0.65}
+
+/* ONBOARDING */
+.ob-overlay{position:fixed;inset:0;background:rgba(247,245,240,0.97);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.ob-overlay.hidden{display:none}
+.ob-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:2rem;max-width:480px;width:100%;box-shadow:0 8px 40px rgba(26,24,21,0.08)}
+.ob-step{display:none}.ob-step.active{display:block}
+.ob-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);text-align:center;margin-bottom:4px}
+.ob-logo em{color:var(--accent);font-style:italic}
+.ob-tagline{font-size:13px;color:var(--text2);text-align:center;margin-bottom:1.75rem}
+.ob-heading{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:0.75rem;line-height:1.3}
+.ob-body{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:1.5rem}
+.ob-body strong{color:var(--text);font-weight:500}
+.ob-list{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:1.5rem}
+.ob-list li{font-size:13px;color:var(--text2);padding-left:18px;position:relative;line-height:1.55}
+.ob-list li::before{content:'→';position:absolute;left:0;color:var(--accent)}
+.ob-q{font-size:15px;font-weight:500;color:var(--text);margin-bottom:1rem;line-height:1.4}
+.ob-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:1.5rem}
+.ob-opt{font-family:'DM Sans',sans-serif;font-size:13px;padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left;transition:all 0.15s;line-height:1.4}
+.ob-opt:hover,.ob-opt.selected{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:500}
+.ob-btn{display:block;width:100%;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;text-align:center;margin-top:0.5rem}
+.ob-btn:disabled{opacity:0.4;cursor:not-allowed}
+.ob-honest{font-size:12px;color:var(--text3);text-align:center;margin-top:0.75rem;line-height:1.6;font-style:italic}
+.ob-rec{background:var(--accent-light);border:1px solid var(--accent);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem}
+.ob-rec-label{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.ob-rec-title{font-size:15px;font-weight:500;color:var(--accent);margin-bottom:4px}
+.ob-rec-desc{font-size:13px;color:var(--text2);line-height:1.5}
+.ob-progress{display:flex;gap:6px;justify-content:center;margin-bottom:1.5rem}
+.ob-dot{width:6px;height:6px;border-radius:50%;background:var(--border)}
+.ob-dot.active{background:var(--accent)}
+.ob-dot.done{background:var(--accent);opacity:0.4}
+</style>
+</head>
+<body>
+
+<!-- API KEY BANNER -->
+<div class="key-banner" id="keyBanner">
+  <span>🔑 <strong>API Key</strong></span>
+  <input type="password" id="keyInput" placeholder="Paste your Anthropic key (sk-ant-api03-...)"/>
+  <button onclick="applyKey()">► Apply</button>
+  <span class="status" id="keyStatus">No key loaded</span>
+</div>
+
+<!-- ONBOARDING -->
+<div class="ob-overlay hidden" id="obOverlay">
+  <div class="ob-box">
+    <div class="ob-progress">
+      <div class="ob-dot active" id="ob-dot-0"></div>
+      <div class="ob-dot" id="ob-dot-1"></div>
+      <div class="ob-dot" id="ob-dot-2"></div>
+    </div>
+    <div class="ob-step active" id="ob-step-0">
+      <div class="ob-logo">Agent <em>Wisdom</em></div>
+      <div class="ob-tagline">A thinking coach for your financial life.</div>
+      <div class="ob-heading">Not advice. A mirror.</div>
+      <div class="ob-body">Agent Wisdom doesn't tell you what to invest in. It shows you <strong>how you think</strong> — and helps you get better at it over time.</div>
+      <ul class="ob-list">
+        <li>Not a trading app. Not a financial advisor.</li>
+        <li>Your data lives on your device. Yours to keep, export, or delete.</li>
+        <li>Your Wisdom Score measures how you think — not whether your investments succeed.</li>
+      </ul>
+      <div class="ob-honest">The more honest you are, the more valuable this becomes.</div>
+      <button class="ob-btn" onclick="obGo(1)">I understand — let's start →</button>
+    </div>
+    <div class="ob-step" id="ob-step-1">
+      <div class="ob-heading">One question before we begin.</div>
+      <div class="ob-q">What is the biggest obstacle to your financial decision-making right now?</div>
+      <div class="ob-opts">
+        <button class="ob-opt" onclick="selectOpt(this,'emotional')">I react emotionally to market moves — even when I know I should not.</button>
+        <button class="ob-opt" onclick="selectOpt(this,'consistency')">I am inconsistent — my decisions do not always match my stated beliefs.</button>
+        <button class="ob-opt" onclick="selectOpt(this,'uncertainty')">I struggle to hold uncertainty — I want to feel certain before I act.</button>
+        <button class="ob-opt" onclick="selectOpt(this,'knowledge')">I do not fully understand the concepts behind my decisions.</button>
+        <button class="ob-opt" onclick="selectOpt(this,'reflection')">I make decisions but rarely step back to examine my reasoning.</button>
+      </div>
+      <button class="ob-btn" id="obNext" onclick="obGo(2)" disabled>Continue →</button>
+      <div class="ob-honest">This is your first entry in your Decision Profile.</div>
+    </div>
+    <div class="ob-step" id="ob-step-2">
+      <div class="ob-heading">Here is where to start.</div>
+      <div class="ob-rec">
+        <div class="ob-rec-label">Recommended first session</div>
+        <div class="ob-rec-title" id="obRecTitle">—</div>
+        <div class="ob-rec-desc" id="obRecDesc">—</div>
+      </div>
+      <div class="ob-body" style="margin-bottom:1rem">Your answer has been saved as the first entry in your Decision Profile.</div>
+      <button class="ob-btn" onclick="finishOb()">Start my first session →</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-text">
+        <div class="time-lbl" id="timeLbl">Good morning</div>
+        <div class="logo">Agent <em>Wisdom</em></div>
+        <div class="sub-lbl">A thinking coach for your financial life</div>
+        <div class="pill">🔐 Your thinking. Your data.</div>
+      </div>
+      <button class="hamburger" onclick="openMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('briefing')">Briefing</button>
+    <button class="tab" onclick="goTab('session')">Session</button>
+    <button class="tab" onclick="goTab('vault')">My Vault</button>
+  </div>
+
+  <!-- BRIEFING TAB -->
+  <div class="panel active" id="tab-briefing">
+    <div class="brief-card">
+      <div class="brief-badge"><span class="brief-dot"></span><span id="briefBadge">Morning Briefing</span></div>
+      <div class="brief-title" id="briefTitle">Preparing your briefing...</div>
+      <div class="brief-body brief-loading" id="briefBody">Fetching market data...</div>
+      <div class="brief-actions">
+        <button class="btn-sm primary" id="readBtn" onclick="toggleRead()">
+          <svg id="readIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span id="readTxt">Read aloud</span>
+        </button>
+        <button class="btn-sm" onclick="refreshBrief()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+        <button class="btn-sm" onclick="goTab('session')">Start a session →</button>
+      </div>
+    </div>
+    <div class="info-card">
+      <div class="info-title">What Agent Wisdom does</div>
+      <div class="info-body">
+        <strong>Not advice.</strong> It never tells you what to buy or sell.<br/>
+        <strong>A mirror.</strong> It reflects how you reason about money and shows you patterns over time.<br/>
+        <strong>A coach.</strong> It teaches, questions, and challenges your thinking — one session at a time.
+      </div>
+    </div>
+  </div>
+
+  <!-- SESSION TAB -->
+  <div class="panel" id="tab-session">
+    <div class="disclaimer">Agent Wisdom is an educational tool only. Nothing here is financial advice.</div>
+    <div class="memory-banner" id="memBanner"><span>⏱</span><span id="memText">Your profile is active.</span></div>
+    <div class="entry-label">How do you want to start today?</div>
+    <div class="entry-grid">
+      <button class="entry-btn" onclick="startMode('think')" id="btn-think">
+        <span class="e-icon">🧠</span>
+        <span class="e-title">Help me think through something</span>
+        <span class="e-desc">A position, decision, or scenario</span>
+      </button>
+      <button class="entry-btn" onclick="startMode('teach')" id="btn-teach">
+        <span class="e-icon">📚</span>
+        <span class="e-title">Teach me a concept</span>
+        <span class="e-desc">Name any topic</span>
+      </button>
+      <button class="entry-btn" onclick="startMode('review')" id="btn-review">
+        <span class="e-icon">🔍</span>
+        <span class="e-title">Review a decision I made</span>
+        <span class="e-desc">Examine your reasoning</span>
+      </button>
+      <button class="entry-btn" onclick="startMode('today')" id="btn-today">
+        <span class="e-icon">📡</span>
+        <span class="e-title">What should I think about today?</span>
+        <span class="e-desc">Get a prompt based on markets</span>
+      </button>
+      <button class="entry-btn full" onclick="startMode('lookback')" id="btn-lookback">
+        <span class="e-icon">⏪</span>
+        <span class="e-title">Look back at my thinking</span>
+        <span class="e-desc">Revisit a past session and see how your reasoning has changed</span>
+      </button>
+      <button class="entry-btn full fire" onclick="startMode('onemoreyr')" id="btn-onemoreyr">
+        <span class="e-icon">🔥</span>
+        <span class="e-title">One More Year <span class="fire-badge">FIRE</span></span>
+        <span class="e-desc">You have reached your number. Coach me through the reasoning to act on it.</span>
+      </button>
+    </div>
+    <div class="mode-banner" id="modeBanner"><span id="modeText"></span></div>
+    <div class="chat" id="chat">
+      <div class="msg agent">
+        <div class="av">AW</div>
+        <div class="bubble">
+          <span class="ctag" id="welcomeTag">Welcome</span>
+          <div class="btext">Choose a session mode above to begin — or just type what is on your mind. I will coach your thinking, not your trades.</div>
+          <div class="bq">What would you like to work on today?</div>
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+        <svg id="micIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>
+        </svg>
+      </button>
+      <div class="input-wrap">
+        <input type="text" id="msgInput" placeholder="Type your thoughts or tap the mic..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+        <button class="send-btn" onclick="sendMsg()">Send</button>
+      </div>
+    </div>
+    <div class="voice-hint" id="voiceHint">Tap the mic to speak, or type below</div>
+    <button class="end-btn" onclick="endSession()">End session — get my summary →</button>
+    <div class="summary" id="summary">
+      <div class="sum-header">
+        <div class="sum-title">Session Summary</div>
+        <div class="sum-date" id="sumDate"></div>
+      </div>
+      <div class="score-block">
+        <div class="score-n" id="scoreNum">—</div>
+        <div class="score-meta">
+          <div class="score-delta" id="scoreDelta"></div>
+          <div class="score-lbl">Wisdom Score</div>
+          <div class="score-stage initial" id="scoreStage">Initial Reading</div>
+          <div class="score-why" id="scoreWhy"></div>
+          <div class="score-note">The score reflects patterns in how you reasoned. It measures the process — not whether your decisions were right.</div>
+        </div>
+      </div>
+      <div class="sum-section">
+        <div class="slbl">What you did well</div>
+        <div class="did-well" id="didWell"></div>
+      </div>
+      <div class="sum-section">
+        <div class="slbl">Pattern to watch</div>
+        <div class="pattern" id="patternWatch"></div>
+      </div>
+      <div class="sum-section">
+        <div class="slbl">Concepts from this session</div>
+        <div class="pill-row" id="concepts"></div>
+      </div>
+      <div class="sum-section">
+        <div class="slbl">One question to sit with</div>
+        <div class="reflect" id="sitWith"></div>
+      </div>
+      <div class="saved-note">✓ Session saved to your vault</div>
+      <button class="new-session-btn" onclick="newSession()">Start a new session</button>
+    </div>
+  </div>
+
+  <!-- VAULT TAB -->
+  <div class="panel" id="tab-vault">
+    <div class="vault-title">My Decision Profile</div>
+    <div class="vault-sub">A record of how you think — stored only on your device. Export or delete at any time.</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-n" id="vSessions">0</div><div class="stat-l">Sessions</div></div>
+      <div class="stat-card"><div class="stat-n" id="vScore">50</div><div class="stat-l">Wisdom Score</div></div>
+      <div class="stat-card"><div class="stat-n" id="vConcepts">0</div><div class="stat-l">Concepts</div></div>
+    </div>
+    <div class="slbl" style="margin-bottom:8px">Session history</div>
+    <div class="session-list" id="sessionList"><div class="empty-vault">No sessions yet.<br/>Complete your first session to start building your Decision Profile.</div></div>
+    <div class="dl-row">
+      <button class="dl-btn accent" onclick="dlJSON()">Download JSON</button>
+      <button class="dl-btn" onclick="dlReport()">Download Report</button>
+      <button class="dl-btn danger" onclick="clearAll()">Clear all data</button>
+    </div>
+  </div>
+
+  <!-- PRICING TAB -->
+  <div class="panel" id="tab-pricing">
+    <div class="pricing-hero">
+      <div class="beta-badge">🚀 Beta Launch Pricing</div>
+      <h2>Invest in how you think.</h2>
+      <p>Most financial apps charge for data. Agent Wisdom is the only one that helps you understand how you reason.</p>
+    </div>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0 <span>/ forever</span></div>
+        <div class="plan-desc">Experience the core coaching loop. No commitment required.</div>
+        <ul class="plan-features">
+          <li>3 coaching sessions per week</li>
+          <li>Session summary after every session</li>
+          <li>Wisdom Score tracking</li>
+          <li>Daily market briefing</li>
+          <li class="no">Full Decision Profile history</li>
+          <li class="no">Drift detection and pattern alerts</li>
+          <li class="no">One More Year FIRE mode</li>
+          <li class="no">Data export</li>
+        </ul>
+        <a class="plan-btn free" href="#" onclick="goTab('session');return false;">Start for free →</a>
+      </div>
+      <div class="plan-card featured">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$9.99 <span>/ month</span></div>
+        <div class="plan-desc">Build a Decision Profile that gets more valuable every day you use it.</div>
+        <ul class="plan-features">
+          <li>Unlimited coaching sessions</li>
+          <li>Full Decision Profile — your complete thinking history</li>
+          <li>All 6 session modes including One More Year</li>
+          <li>Drift detection — catch when your thinking shifts</li>
+          <li>30-day thinking reviews</li>
+          <li>Memory across sessions</li>
+          <li>Full data export</li>
+          <li>Voice selection and response depth controls</li>
+        </ul>
+        <a class="plan-btn pro" href="https://buy.stripe.com/test_bJe6oGdPP3sn4EfeOkefC01" target="_blank">Get Pro — $9.99/mo →</a>
+      </div>
+      <div class="plan-card">
+        <div class="plan-name">Elite</div>
+        <div class="plan-price">$19.99 <span>/ month</span></div>
+        <div class="plan-desc">For serious long-term investors who want to know when their thinking has shifted before it costs them.</div>
+        <ul class="plan-features">
+          <li>Everything in Pro</li>
+          <li>Priority access to new features</li>
+          <li>Early access to FIRE-specific coaching modules</li>
+          <li>Extended session memory up to 12 months</li>
+          <li>Founding member recognition</li>
+          <li>Direct feedback line to the product team</li>
+        </ul>
+        <a class="plan-btn elite" href="https://buy.stripe.com/test_aFa9AS2779QL1s3eOkefC02" target="_blank">Get Elite — $19.99/mo →</a>
+      </div>
+    </div>
+    <div class="pricing-note">All plans include full data rights — local-first, exportable, deletable.<br/><a href="mailto:hello@agentwisdom.io">hello@agentwisdom.io</a></div>
+  </div>
+
+  <!-- FEEDBACK TAB -->
+  <div class="panel" id="tab-feedback">
+    <div class="feedback-hero">
+      <h2>Help us build this right.</h2>
+      <p>Agent Wisdom is in active beta. Your feedback directly shapes what we build next.</p>
+    </div>
+    <div class="feedback-why">
+      <div class="feedback-why-title">Why your feedback matters right now</div>
+      <ul class="feedback-why-list">
+        <li>We are deciding which features to build next based on real user input</li>
+        <li>Beta users who complete the survey get first access to new session modes</li>
+        <li>Takes 4 minutes. Genuinely read by the team.</li>
+      </ul>
+    </div>
+    <div class="feedback-embed">
+      <iframe data-tally-src="https://tally.so/embed/68vMrJ?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1" loading="lazy" width="100%" height="500" frameborder="0" marginheight="0" marginwidth="0" title="Agent Wisdom Beta Feedback" style="border:none;background:transparent"></iframe>
+      <script>var d=document,w="https://tally.so/widgets/embed.js",v=function(){"undefined"!=typeof Tally?Tally.loadEmbeds():d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach((function(e){e.src=e.dataset.tallySrc}))};if("undefined"!=typeof Tally)v();else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");s.src=w,s.onload=v,s.onerror=v,d.body.appendChild(s);}</script>
+    </div>
+    <div class="quick-card">
+      <div class="quick-title">Quick rating</div>
+      <div class="quick-desc">How is Agent Wisdom working for you so far?</div>
+      <div class="rating-row">
+        <button class="rating-btn" onclick="rate(this,'Love it')">Love it</button>
+        <button class="rating-btn" onclick="rate(this,'Good')">Good</button>
+        <button class="rating-btn" onclick="rate(this,'Mixed')">Mixed</button>
+        <button class="rating-btn" onclick="rate(this,'Needs work')">Needs work</button>
+      </div>
+      <textarea class="feedback-text" id="fbText" placeholder="Anything specific you want us to know? (optional)"></textarea>
+      <button class="submit-btn" onclick="submitFb()">Submit feedback</button>
+      <div class="thanks" id="fbThanks">Thank you — this genuinely helps.</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="panel" id="tab-settings">
+    <div class="set-card">
+      <div class="set-title">Claude API Key</div>
+      <div class="set-desc">Powers your coaching sessions. Stored only in your browser.</div>
+      <div class="set-row">
+        <input type="password" id="settingsKey" placeholder="sk-ant-api03-..."/>
+        <button class="set-save" onclick="saveSettingsKey()">Save</button>
+      </div>
+      <div class="set-ok" id="settingsOk">✓ Key saved</div>
+      <div class="set-hint">Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys.</div>
+    </div>
+    <div class="set-card">
+      <div class="set-title">Agent Voice</div>
+      <div class="set-desc">Choose how the agent sounds. Premium voices (★) sound most human.</div>
+      <div class="lang-row" id="langRow">
+        <button class="lang-btn active" onclick="filterLang('all',this)">All</button>
+        <button class="lang-btn" onclick="filterLang('en',this)">🇺🇸 English</button>
+        <button class="lang-btn" onclick="filterLang('es',this)">🇪🇸 Spanish</button>
+        <button class="lang-btn" onclick="filterLang('fr',this)">🇫🇷 French</button>
+        <button class="lang-btn" onclick="filterLang('de',this)">🇩🇪 German</button>
+        <button class="lang-btn" onclick="filterLang('ja',this)">🇯🇵 Japanese</button>
+        <button class="lang-btn" onclick="filterLang('ar',this)">🇸🇦 Arabic</button>
+        <button class="lang-btn" onclick="filterLang('pt',this)">🇧🇷 Portuguese</button>
+      </div>
+      <select class="voice-select" id="voiceSelect" onchange="saveVoice()"><option>Loading voices...</option></select>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;margin-top:-6px">★ Google voices sound the most natural. Available in Chrome when online.</div>
+      <div style="font-size:12px;font-weight:500;color:var(--text);margin-bottom:8px">Reading speed</div>
+      <div class="speed-row">
+        <button class="speed-btn" id="sp-slow" onclick="setSpeed(0.82,'slow')">Slower</button>
+        <button class="speed-btn active" id="sp-normal" onclick="setSpeed(0.95,'normal')">Normal</button>
+        <button class="speed-btn" id="sp-fast" onclick="setSpeed(1.1,'fast')">Faster</button>
+      </div>
+      <button class="preview-btn" id="previewBtn" onclick="previewVoice()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <span id="previewTxt">Preview this voice</span>
+      </button>
+    </div>
+    <div class="set-card">
+      <div class="set-title">Response Depth</div>
+      <div class="set-desc">Control how detailed the coaching responses are.</div>
+      <div class="length-row">
+        <button class="length-btn" id="len-short" onclick="setLen('short')">Short<small>Quick + focused</small></button>
+        <button class="length-btn active" id="len-medium" onclick="setLen('medium')">Medium<small>Default depth</small></button>
+        <button class="length-btn" id="len-long" onclick="setLen('long')">Long<small>Deep exploration</small></button>
+      </div>
+    </div>
+    <div class="manifesto">
+      <h3>Three commitments. Not marketing.</h3>
+      <ul>
+        <li>We will never give financial advice, imply recommendations, or take responsibility for your decisions. This is structural — not a disclaimer.</li>
+        <li>Your data is yours. Local-first, fully exportable, completely deletable, zero third-party sharing without explicit per-request consent.</li>
+        <li>Your thinking grows stronger with or without us. An agent that grows with you is more honest than one that claims to make itself unnecessary.</li>
+        <li>The Wisdom Score measures reasoning process quality — never whether your investments succeed.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- SIDE MENU OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeMenu()"></div>
+<div class="side-menu" id="sideMenu">
+  <div class="sm-header">
+    <div class="sm-logo">Agent <em>Wisdom</em></div>
+    <button class="sm-close" onclick="closeMenu()">✕</button>
+  </div>
+  <div class="sm-nav">
+    <button class="sm-item" onclick="menuGo('pricing')"><span class="icon">💳</span>Pricing<span class="arrow">›</span></button>
+    <button class="sm-item" onclick="menuGo('feedback')"><span class="icon">💬</span>Feedback<span class="arrow">›</span></button>
+    <button class="sm-item" onclick="menuGo('settings')"><span class="icon">⚙️</span>Settings<span class="arrow">›</span></button>
+  </div>
+  <div class="sm-footer">
+    <div class="sm-tagline">Your thinking. Sharpened over time.</div>
+    <div class="sm-version">Agent Wisdom · Beta</div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════
+// STATE
+// ═══════════════════════════
+var claudeKey = '';
+var messages = [];
+var recognition = null;
+var isRecording = false;
+var isSpeaking = false;
+var isPreviewing = false;
+var wisdomScore = 50;
+var sessionCount = 0;
+var sessionData = [];
+var briefingText = '';
+var briefingReady = false;
+var currentMode = null;
+var baselineAnswer = null;
+var selectedOpt = null;
+var voiceRate = 0.95;
+var selectedVoiceName = '';
+var answerLength = 'medium';
+var allVoices = [];
+var quickRating = '';
+
+var VAULT_KEY = 'aw_vault_v5';
+var CK_KEY = 'aw_ck_v1';
+var OB_KEY = 'aw_ob_v1';
+var VOICE_KEY = 'aw_voice_v1';
+var LEN_KEY = 'aw_len_v1';
+var FINNHUB_KEY = 'd77net9r01qp6afm8970d77net9r01qp6afm897g';
+
+// ═══════════════════════════
+// API KEY
+// ═══════════════════════════
+function applyKey() {
+  var val = document.getElementById('keyInput').value.trim();
+  if (!val) { alert('Please paste your API key first.'); return; }
+  if (!val.startsWith('sk-ant-')) { alert('Your key should start with sk-ant-\n\nYou entered: ' + val.substring(0,25) + '...'); return; }
+  claudeKey = val;
+  try { localStorage.setItem(CK_KEY, btoa(val)); } catch(e) {}
+  document.getElementById('keyInput').value = '••••••••••••••••••';
+  document.getElementById('keyStatus').textContent = '✓ Key active';
+  document.getElementById('keyBanner').classList.add('active');
+  document.getElementById('settingsKey').value = '••••••••••••••••••';
+  document.getElementById('settingsOk').style.display = 'block';
+  briefingReady = false;
+  generateBrief();
+  try { if (!localStorage.getItem(OB_KEY)) setTimeout(function(){ showOb(); }, 600); } catch(e) {}
+}
+
+function saveSettingsKey() {
+  var val = document.getElementById('settingsKey').value.trim();
+  if (!val.startsWith('sk-ant-')) { alert('Key must start with sk-ant-'); return; }
+  claudeKey = val;
+  try { localStorage.setItem(CK_KEY, btoa(val)); } catch(e) {}
+  document.getElementById('settingsKey').value = '••••••••••••••••••';
+  document.getElementById('settingsOk').style.display = 'block';
+  document.getElementById('keyInput').value = '••••••••••••••••••';
+  document.getElementById('keyStatus').textContent = '✓ Key active';
+  document.getElementById('keyBanner').classList.add('active');
+  briefingReady = false;
+  generateBrief();
+}
+
+function loadKey() {
+  try {
+    var s = localStorage.getItem(CK_KEY);
+    if (s) {
+      claudeKey = atob(s);
+      document.getElementById('keyInput').value = '••••••••••••••••••';
+      document.getElementById('keyStatus').textContent = '✓ Key active';
+      document.getElementById('keyBanner').classList.add('active');
+      document.getElementById('settingsKey').value = '••••••••••••••••••';
+      document.getElementById('settingsOk').style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════
+// NAVIGATION
+// ═══════════════════════════
+var PRIMARY = ['briefing','session','vault'];
+var ALL_TABS = ['briefing','session','vault','pricing','feedback','settings'];
+
+function goTab(name) {
+  document.querySelectorAll('.tab').forEach(function(el, i) {
+    el.classList.toggle('active', PRIMARY[i] === name);
+  });
+  ALL_TABS.forEach(function(n) {
+    var p = document.getElementById('tab-'+n);
+    if (p) p.classList.toggle('active', n === name);
+  });
+  if (name === 'briefing' && !briefingReady) generateBrief();
+  if (name === 'vault') renderVault();
+}
+
+function openMenu() {
+  document.getElementById('sideMenu').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMenu() {
+  document.getElementById('sideMenu').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function menuGo(name) {
+  closeMenu();
+  document.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('active'); });
+  ALL_TABS.forEach(function(n) {
+    var p = document.getElementById('tab-'+n);
+    if (p) p.classList.toggle('active', n === name);
+  });
+  if (name === 'vault') renderVault();
+}
+
+// ═══════════════════════════
+// TIME OF DAY
+// ═══════════════════════════
+function tod() {
+  var h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'morning';
+  if (h >= 12 && h < 17) return 'afternoon';
+  return 'evening';
+}
+
+function initTOD() {
+  var t = tod();
+  var cfg = {
+    morning: { lbl:'Good morning', badge:'Morning Briefing', title:'Your morning market context' },
+    afternoon: { lbl:'Good afternoon', badge:'Afternoon Update', title:'Mid-day market context' },
+    evening: { lbl:'Good evening', badge:'Evening Recap', title:'End-of-day recap' }
+  }[t];
+  document.body.className = t;
+  document.getElementById('timeLbl').textContent = cfg.lbl;
+  document.getElementById('briefBadge').textContent = cfg.badge;
+  document.getElementById('briefTitle').textContent = cfg.title;
+  document.getElementById('welcomeTag').textContent = cfg.lbl;
+}
+
+function briefPrompt() {
+  var date = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var t = tod();
+  var p = {
+    morning: 'You are a financial educator. Write a warm morning market briefing for '+date+'. In 3 sentences: (1) market context and what is driving it, (2) one key theme worth understanding today, (3) one honest observation about the thinking this environment tends to trigger. Plain English. No buy/sell recommendations.',
+    afternoon: 'You are a financial educator. Write a crisp afternoon market update for '+date+'. In 3 sentences: (1) primary market narrative this afternoon, (2) one concept that helps make sense of the movement, (3) one grounding thought for a long-term investor feeling reactive. Plain English. No investment recommendations.',
+    evening: 'You are a financial educator. Write a calm evening recap for '+date+'. In 3 sentences: (1) what happened in markets today and what drove it, (2) one concept this day illustrated, (3) one reflection for a long-term investor to carry into tomorrow. Plain English. No investment recommendations.'
+  }[t];
+  return p;
+}
+
+// ═══════════════════════════
+// MARKET DATA
+// ═══════════════════════════
+async function fetchMarket() {
+  var ctx = '';
+  try {
+    var r = await fetch('https://fred.stlouisfed.org/graph/fredgraph.csv?id=FEDFUNDS');
+    if (r.ok) { var t = await r.text(); var lines = t.trim().split('\n'); var last = lines[lines.length-1].split(','); ctx += 'Fed Funds Rate: '+parseFloat(last[1]).toFixed(2)+'%. '; }
+  } catch(e) {}
+  try {
+    if (FINNHUB_KEY !== 'demo') {
+      var r2 = await fetch('https://finnhub.io/api/v1/quote?symbol=SPY&token='+FINNHUB_KEY);
+      if (r2.ok) { var d = await r2.json(); if (d.dp) ctx += 'S&P 500 (SPY) is '+(d.dp>0?'up':'down')+' '+Math.abs(d.dp).toFixed(2)+'% today. '; }
+    }
+  } catch(e) {}
+  return ctx;
+}
+
+// ═══════════════════════════
+// BRIEFING
+// ═══════════════════════════
+async function generateBrief() {
+  if (!claudeKey) return;
+  document.getElementById('briefBody').textContent = 'Fetching market data...';
+  document.getElementById('briefBody').className = 'brief-body brief-loading';
+  var mkt = await fetchMarket();
+  var prompt = briefPrompt();
+  if (mkt) prompt += '\n\nCurrent market data: ' + mkt;
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})
+    });
+    if (!res.ok) { var e = await res.json(); document.getElementById('briefBody').textContent = 'Error: '+(e.error?.message||'Check your API key.'); document.getElementById('briefBody').className = 'brief-body'; return; }
+    var data = await res.json();
+    briefingText = data.content[0].text;
+    document.getElementById('briefBody').textContent = briefingText;
+    document.getElementById('briefBody').className = 'brief-body';
+    briefingReady = true;
+  } catch(e) { document.getElementById('briefBody').textContent = 'Network error. Check your connection.'; document.getElementById('briefBody').className = 'brief-body'; }
+}
+
+function refreshBrief() { briefingReady = false; generateBrief(); }
+
+// ═══════════════════════════
+// ONBOARDING
+// ═══════════════════════════
+var OB_RECS = {
+  emotional:{mode:'think',title:'🧠 Help me think through something',desc:'You identified emotional reactivity. Start by thinking through a recent decision — the agent will help you separate the feeling from the reasoning.'},
+  consistency:{mode:'review',title:'🔍 Review a decision I made',desc:'You identified inconsistency. Start by reviewing a past decision — we will examine whether your reasoning matched your stated beliefs.'},
+  uncertainty:{mode:'think',title:'🧠 Help me think through something',desc:'You identified difficulty holding uncertainty. Start by thinking through something you are unsure about.'},
+  knowledge:{mode:'teach',title:'📚 Teach me a concept',desc:'You want stronger foundations. Name a concept you have heard but do not fully understand.'},
+  reflection:{mode:'review',title:'🔍 Review a decision I made',desc:'You rarely examine your reasoning after the fact. Start with a decision you have already made.'}
+};
+
+function showOb() { document.getElementById('obOverlay').classList.remove('hidden'); }
+
+function obGo(step) {
+  document.querySelectorAll('.ob-step').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('ob-step-'+step).classList.add('active');
+  document.querySelectorAll('.ob-dot').forEach(function(d,i){ d.classList.remove('active','done'); if(i<step) d.classList.add('done'); if(i===step) d.classList.add('active'); });
+  if (step === 2 && selectedOpt) {
+    var r = OB_RECS[selectedOpt];
+    document.getElementById('obRecTitle').textContent = r.title;
+    document.getElementById('obRecDesc').textContent = r.desc;
+  }
+}
+
+function selectOpt(el, val) {
+  document.querySelectorAll('.ob-opt').forEach(function(o){ o.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedOpt = val;
+  document.getElementById('obNext').disabled = false;
+}
+
+function finishOb() {
+  try { localStorage.setItem(OB_KEY, JSON.stringify({baseline:selectedOpt,date:new Date().toISOString()})); } catch(e) {}
+  baselineAnswer = selectedOpt;
+  document.getElementById('obOverlay').classList.add('hidden');
+  if (selectedOpt && OB_RECS[selectedOpt]) {
+    goTab('session');
+    setTimeout(function(){ startMode(OB_RECS[selectedOpt].mode); }, 300);
+  }
+}
+
+// ═══════════════════════════
+// SESSION MODES
+// ═══════════════════════════
+var MODES = {
+  think: {
+    label:'🧠 Think Through Something',
+    banner:'Mode: Help me think through something',
+    opener:'I want to help you think through a financial decision or scenario. What is on your mind right now — a position you are considering, something you are unsure about, or a situation you are trying to reason through?',
+    ctx:'The user wants to think through a specific financial decision. Coach their reasoning process — not the decision itself. Ask what their thesis is. Ask what would change their mind. Never recommend a course of action.'
+  },
+  teach: {
+    label:'📚 Teach Me a Concept',
+    banner:'Mode: Learn a concept',
+    opener:'What would you like to understand better? Name any financial concept — position sizing, dollar cost averaging, P/E ratios, volatility, the yield curve — and I will explain it clearly with real examples.',
+    ctx:'The user wants to learn a concept. Teach it clearly: one solid paragraph with a real-world analogy, plain English. Then ask ONE question that connects the concept to their actual situation.'
+  },
+  review: {
+    label:'🔍 Review a Decision',
+    banner:'Mode: Review a past decision',
+    opener:'Tell me about a financial decision you have already made. We are not going to judge whether it was right or wrong. We are going to look at the quality of your reasoning at the time.',
+    ctx:'Help them evaluate the QUALITY OF THEIR REASONING at the time — not whether the decision turned out well. Ask what information they had, what they ignored, whether their thesis was clear, whether they considered what would prove them wrong.'
+  },
+  today: {
+    label:'📡 Today\'s Thinking Prompt',
+    banner:'Mode: Today\'s thinking prompt',
+    opener:'Let me give you something worth thinking about today.',
+    ctx:'Give a 2-3 sentence market context brief (NOT advice — situational awareness). Then offer one specific thinking prompt connecting today\'s context to how investors should think. End with: "What does this bring up for you?"',
+    autoSend: true
+  },
+  lookback: {
+    label:'⏪ Look Back at My Thinking',
+    banner:'Mode: Reflect on past thinking',
+    opener:null,
+    ctx:'The user is reflecting on past thinking. You have their session history in context. Reference specific things they said in past sessions. Look for what changed and why, whether changes were driven by evidence or emotion. Name contradictions directly but without judgment.'
+  },
+  onemoreyr: {
+    label:'🔥 One More Year',
+    banner:'FIRE Mode: One More Year coaching',
+    opener:'This session is for people who have reached — or are very close to — their FI number, but are still working.\n\nThere is no judgment here. The goal is to examine the reasoning behind that choice honestly.\n\nTell me where you are: Have you hit your number? And what is the honest reason you are still working?',
+    ctx:'CRITICAL: One More Year mode for the FIRE community. The user has reached or is near their FI number but continues working. Coach the REASONING behind staying — not the math. Is their hesitation genuine risk analysis or fear disguised as analysis? Have they distinguished "I need more money" from "I do not trust myself to stop"? Use FIRE language: FI number, sequence of returns, 4% rule, One More Year syndrome. Never tell them what to do.'
+  }
+};
+
+function buildMemory() {
+  var real = sessionData.filter(function(s){ return !s.isBaseline; });
+  if (!real.length) return '';
+  var ctx = '\n\nUSER DECISION PROFILE:\nSessions: '+real.length+'\nWisdom Score: '+wisdomScore+'\n';
+  if (baselineAnswer) ctx += 'Self-identified obstacle: '+baselineAnswer+'\n';
+  ctx += '\nRecent sessions:\n';
+  real.slice(-4).reverse().forEach(function(s,i){
+    ctx += '\n[Session '+(real.length-i)+' — '+new Date(s.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' — '+s.mode+']\n';
+    if (s.didWell) ctx += 'Strength: '+s.didWell+'\n';
+    if (s.patternToWatch) ctx += 'Pattern: '+s.patternToWatch+'\n';
+    if (s.sitWith) ctx += 'Left with: '+s.sitWith+'\n';
+  });
+  ctx += '\nIMPORTANT: Reference this history when relevant. Surface contradictions. Name patterns across sessions.';
+  return ctx;
+}
+
+function getLengthCtx() {
+  var map = {
+    short:'RESPONSE LENGTH: Keep responses concise. Teaching paragraph: 2-3 sentences max. Be direct. One tight question at the end.',
+    medium:'RESPONSE LENGTH: Standard depth. Teaching paragraph: 4-5 sentences with one real-world example. One specific question.',
+    long:'RESPONSE LENGTH: Full depth. Teaching paragraph: 5-7 sentences with examples and nuance. One rich multi-part question.'
+  };
+  return map[answerLength] || map.medium;
+}
+
+function sysPrompt(mode) {
+  var t = tod();
+  var tCtx = t==='morning'?'It is morning — the user is starting their day.':t==='afternoon'?'Markets are open or recently closed.':'It is evening — markets have closed for the day.';
+  var mCtx = mode && MODES[mode] ? MODES[mode].ctx : '';
+  var mem = buildMemory();
+  return 'You are Agent Wisdom — a financial reasoning coach. Not a financial advisor. Your job is to improve how users THINK about money, not tell them what to do with it. '+tCtx+'\n\n'+(mCtx?'SESSION MODE:\n'+mCtx+'\n':'')+mem+'\n\n'+getLengthCtx()+'\n\nCORE PATTERN:\n- Always lead with one substantive teaching paragraph (plain English, real examples).\n- Then ask ONE specific question connecting the teaching to the user\'s actual situation.\n- Never answer with just a question. Always teach something real first.\n\nWHEN USER MENTIONS A STOCK: Engage with their REASONING — not the stock itself. Ask: "What is your thesis? What would change your mind?"\n\nRULES:\n- Never recommend buying or selling any specific security.\n- Never give probability estimates on real assets.\n- If asked "what should I do?" — coach their reasoning, do not answer the question.\n\nRESPONSE FORMAT — return ONLY raw valid JSON, no markdown, no backticks:\n{"concept":"<2-4 word label>","teaching":"<educational coaching paragraph>","question":"<one specific question>"}';
+}
+
+function getOpener(mode) {
+  if (mode === 'lookback') {
+    var real = sessionData.filter(function(s){ return !s.isBaseline; });
+    if (real.length >= 2) {
+      var old = real[Math.max(0,real.length-4)];
+      var recent = real[real.length-1];
+      return 'I am going to surface something from your recent sessions. On '+new Date(old.date).toLocaleDateString('en-US',{month:'long',day:'numeric'})+', you worked on: "'+old.patternToWatch+'". Most recently, the pattern observed was: "'+recent.patternToWatch+'". Do you see a connection — or a change?';
+    }
+    return 'This mode surfaces patterns in how you think over time. Tell me: what is a financial view you held 4-6 weeks ago? What did you believe then — and has anything changed?';
+  }
+  return MODES[mode].opener;
+}
+
+function startMode(mode) {
+  document.querySelectorAll('.entry-btn').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('btn-'+mode);
+  if (btn) btn.classList.add('active');
+  currentMode = mode;
+  var cfg = MODES[mode];
+  document.getElementById('modeText').textContent = cfg.banner;
+  document.getElementById('modeBanner').classList.add('show');
+  var chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  messages = [];
+  document.getElementById('summary').style.display = 'none';
+  if (cfg.autoSend) {
+    addAgentMsg('📡','Getting today\'s thinking prompt...','');
+    callClaudeRaw(cfg.opener);
+  } else {
+    var opener = getOpener(mode);
+    addAgentMsg(cfg.label,opener,'');
+    messages.push({role:'assistant',content:opener});
+  }
+  updateMemBanner();
+  setTimeout(function(){ document.getElementById('msgInput').focus(); },200);
+}
+
+async function callClaudeRaw(userMsg) {
+  if (!claudeKey) { alert('Please add your API key first.'); return; }
+  var chat = document.getElementById('chat');
+  chat.innerHTML = '';
+  messages = [{role:'user',content:userMsg}];
+  showTyping();
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:sysPrompt(currentMode),messages:messages})});
+    var data = await res.json();
+    removeTyping();
+    parseAndRender(data.content[0].text);
+  } catch(e) { showErr('Network error. Check your connection.'); }
+}
+
+// ═══════════════════════════
+// CHAT
+// ═══════════════════════════
+function addAgentMsg(concept, teaching, question) {
+  var chat = document.getElementById('chat');
+  var d = document.createElement('div');
+  d.className = 'msg agent';
+  if (teaching && question) {
+    d.innerHTML = '<div class="av">AW</div><div class="bubble"><span class="ctag">'+concept+'</span><div class="btext">'+teaching+'</div><div class="bq">'+question+'</div></div>';
+  } else {
+    d.innerHTML = '<div class="av">AW</div><div class="bubble"><span class="ctag">'+concept+'</span><div class="btext">'+teaching+'</div></div>';
+  }
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addUserMsg(text) {
+  messages.push({role:'user',content:text});
+  var chat = document.getElementById('chat');
+  var d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = '<div class="av">You</div><div class="bubble">'+text+'</div>';
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  var chat = document.getElementById('chat');
+  var d = document.createElement('div');
+  d.className='msg agent';d.id='typing';
+  d.innerHTML='<div class="av">AW</div><div class="bubble"><div class="dots"><span></span><span></span><span></span></div></div>';
+  chat.appendChild(d);chat.scrollTop=chat.scrollHeight;
+}
+function removeTyping() { var t=document.getElementById('typing');if(t)t.remove(); }
+
+function showErr(msg) {
+  removeTyping();
+  var chat=document.getElementById('chat');
+  var d=document.createElement('div');d.className='msg agent';
+  d.innerHTML='<div class="av">AW</div><div class="bubble" style="color:var(--red)">'+msg+'</div>';
+  chat.appendChild(d);chat.scrollTop=chat.scrollHeight;
+}
+
+function parseAndRender(raw) {
+  var parsed;
+  try { parsed=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+  catch(e) { parsed={concept:'Insight',teaching:raw,question:'How does this connect to your situation?'}; }
+  addAgentMsg(parsed.concept,parsed.teaching,parsed.question);
+  messages.push({role:'assistant',content:parsed.teaching+' '+parsed.question});
+  speak(parsed.teaching+' '+parsed.question);
+}
+
+async function callClaude(text) {
+  if (!claudeKey) { alert('Please add your API key in the banner at the top.'); return; }
+  addUserMsg(text);
+  showTyping();
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:sysPrompt(currentMode),messages:messages})});
+    if (!res.ok) { var e=await res.json();showErr('Error: '+(e.error?.message||'Check your API key.'));return; }
+    var data=await res.json();
+    removeTyping();
+    parseAndRender(data.content[0].text);
+  } catch(e) { showErr('Network error. Check your connection.'); }
+}
+
+function sendMsg() {
+  var inp=document.getElementById('msgInput');
+  var t=inp.value.trim();
+  if(!t)return;
+  inp.value='';
+  callClaude(t);
+}
+
+// ═══════════════════════════
+// END SESSION
+// ═══════════════════════════
+async function endSession() {
+  if (messages.length < 2) { alert('Have at least one exchange before ending the session.'); return; }
+  if (!claudeKey) { alert('Please add your API key first.'); return; }
+  showTyping();
+  var modeLabel = currentMode ? MODES[currentMode].label : 'General Session';
+  var transcript = messages.map(function(m){ return (m.role==='user'?'User':'Agent')+': '+m.content; }).join('\n\n');
+  var p = 'Generate a session summary for Agent Wisdom. Session mode: '+modeLabel+'\n\nTranscript:\n'+transcript+'\n\nReturn ONLY valid JSON:\n{"scoreDelta":<integer 2-5>,"scoreWhy":"<specific explanation referencing what they said>","didWell":"<specific strength from THIS session>","patternToWatch":"<honest pattern visible in THIS session>","concepts":["<concept 1>","<concept 2>","<concept 3>"],"sitWith":"<one honest question connected to something they actually said>"}';
+  try {
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:p}]})});
+    var data=await res.json();
+    removeTyping();
+    var s=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    sessionCount++;
+    wisdomScore=Math.min(100,wisdomScore+s.scoreDelta);
+    var stage=sessionCount===1?{n:'🌱 Initial Reading',c:'initial',note:'This is your baseline — the score gets more accurate as your profile grows.'}:sessionCount<=4?{n:'📈 Building',c:'building',note:'Session '+sessionCount+'. Tracking patterns across sessions now.'}:{n:'✦ Established',c:'established',note:sessionCount+' sessions in. Your profile is building real depth.'};
+    document.getElementById('sumDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    document.getElementById('scoreNum').textContent=wisdomScore;
+    document.getElementById('scoreDelta').textContent='+'+s.scoreDelta+' this session';
+    document.getElementById('scoreWhy').textContent=s.scoreWhy+' · '+stage.note;
+    var st=document.getElementById('scoreStage');st.textContent=stage.n;st.className='score-stage '+stage.c;
+    document.getElementById('didWell').textContent=s.didWell;
+    document.getElementById('patternWatch').textContent=s.patternToWatch;
+    document.getElementById('sitWith').textContent=s.sitWith;
+    var cel=document.getElementById('concepts');cel.innerHTML='';
+    (s.concepts||[]).forEach(function(c){var sp=document.createElement('span');sp.className='concept-pill';sp.textContent=c;cel.appendChild(sp);});
+    sessionData.push({date:new Date().toISOString(),mode:modeLabel,wisdomScore:wisdomScore,scoreDelta:s.scoreDelta,concepts:s.concepts,didWell:s.didWell,patternToWatch:s.patternToWatch,sitWith:s.sitWith,scoreWhy:s.scoreWhy});
+    saveVault();
+    document.getElementById('summary').style.display='block';
+    document.getElementById('summary').scrollIntoView({behavior:'smooth'});
+    messages=[];currentMode=null;
+    document.querySelectorAll('.entry-btn').forEach(function(b){b.classList.remove('active');});
+    document.getElementById('modeBanner').classList.remove('show');
+  } catch(e) { removeTyping();alert('Could not generate summary. Please try again.'); }
+}
+
+function newSession() {
+  document.getElementById('summary').style.display='none';
+  var chat=document.getElementById('chat');
+  chat.innerHTML='';messages=[];
+  var d=document.createElement('div');d.className='msg agent';
+  d.innerHTML='<div class="av">AW</div><div class="bubble"><span class="ctag">New session</span><div class="btext">Choose a mode above to begin your next session.</div></div>';
+  chat.appendChild(d);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ═══════════════════════════
+// VAULT
+// ═══════════════════════════
+function saveVault() {
+  try { localStorage.setItem(VAULT_KEY,JSON.stringify({sessions:sessionData,wisdomScore:wisdomScore,sessionCount:sessionCount,baseline:baselineAnswer,updated:new Date().toISOString()})); } catch(e) {}
+}
+
+function loadVault() {
+  try {
+    var r=localStorage.getItem(VAULT_KEY);
+    if (r) { var d=JSON.parse(r);sessionData=d.sessions||[];wisdomScore=d.wisdomScore||50;sessionCount=d.sessionCount||0;baselineAnswer=d.baseline||null; }
+  } catch(e) {}
+}
+
+function renderVault() {
+  document.getElementById('vSessions').textContent=sessionData.filter(function(s){return !s.isBaseline;}).length;
+  document.getElementById('vScore').textContent=wisdomScore;
+  var allC=[...new Set(sessionData.flatMap(function(s){return s.concepts||[];}))];
+  document.getElementById('vConcepts').textContent=allC.length;
+  var list=document.getElementById('sessionList');
+  var real=sessionData.filter(function(s){return !s.isBaseline;});
+  if (!real.length){list.innerHTML='<div class="empty-vault">No sessions yet.<br/>Complete your first session to start building your Decision Profile.</div>';return;}
+  list.innerHTML='';
+  [...real].reverse().forEach(function(s){
+    var d=new Date(s.date);
+    var el=document.createElement('div');el.className='si';
+    el.innerHTML='<div class="si-top"><span class="si-date">'+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span><span class="si-mode">'+(s.mode||'Session')+'</span></div><div class="si-score">Wisdom Score: '+s.wisdomScore+' <span style="color:var(--accent);font-size:12px">(+'+s.scoreDelta+')</span></div>'+(s.didWell?'<div class="si-well">'+s.didWell.substring(0,100)+(s.didWell.length>100?'…':'')+'</div>':'')+'<div class="si-pills">'+(s.concepts||[]).map(function(c){return '<span class="si-pill">'+c+'</span>';}).join('')+'</div>';
+    list.appendChild(el);
+  });
+}
+
+function updateMemBanner() {
+  var real=sessionData.filter(function(s){return !s.isBaseline;});
+  var b=document.getElementById('memBanner');
+  if (real.length>=2) {
+    b.classList.add('show');
+    var last=real[real.length-1];
+    var days=Math.floor((Date.now()-new Date(last.date))/86400000);
+    var when=days===0?'today':days===1?'yesterday':days+' days ago';
+    document.getElementById('memText').innerHTML='<strong>Your profile has '+real.length+' sessions.</strong> Last session '+when+'. The agent has context from your history.';
+  } else { b.classList.remove('show'); }
+}
+
+function dlJSON() {
+  if (!sessionData.length){alert('No sessions yet.');return;}
+  var blob=new Blob([JSON.stringify({meta:{platform:'Agent Wisdom',exportedAt:new Date().toISOString()},wisdomScore:wisdomScore,sessions:sessionData},null,2)],{type:'application/json'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='agent-wisdom-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+
+function dlReport() {
+  if (!sessionData.length){alert('No sessions yet.');return;}
+  var allC=[...new Set(sessionData.flatMap(function(s){return s.concepts||[];}))];
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Agent Wisdom Report</title><style>body{font-family:Georgia,serif;max-width:720px;margin:48px auto;color:#1A1815;padding:0 24px}h1{color:#2D4A3E}h2{color:#2D4A3E;border-bottom:1px solid #eee;padding-bottom:8px}.session{border:1px solid #eee;border-radius:10px;padding:16px;margin-bottom:12px}</style></head><body><h1>Agent Wisdom</h1><p>Decision Profile · '+new Date().toLocaleDateString()+'</p><p>Wisdom Score: '+wisdomScore+' · Sessions: '+sessionData.length+'</p><h2>All concepts</h2><p>'+allC.join(', ')+'</p><h2>Sessions</h2>'+[...sessionData].reverse().map(function(s){return '<div class="session"><strong>'+new Date(s.date).toLocaleDateString()+' — '+s.mode+'</strong><p>Score: '+s.wisdomScore+' (+'+s.scoreDelta+')</p><p>'+s.didWell+'</p><p><em>'+s.sitWith+'</em></p></div>';}).join('')+'</body></html>';
+  var blob=new Blob([html],{type:'text/html'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='agent-wisdom-report-'+new Date().toISOString().slice(0,10)+'.html';a.click();
+}
+
+function clearAll() {
+  if (!confirm('Delete all session history and reset Wisdom Score? Cannot be undone.')) return;
+  sessionData=[];wisdomScore=50;sessionCount=0;baselineAnswer=null;
+  try{localStorage.removeItem(VAULT_KEY);localStorage.removeItem(OB_KEY);}catch(e){}
+  updateMemBanner();renderVault();
+}
+
+// ═══════════════════════════
+// VOICE
+// ═══════════════════════════
+function loadVoiceSettings() {
+  try {
+    var s=localStorage.getItem(VOICE_KEY);
+    if (s) { var d=JSON.parse(s);voiceRate=d.rate||0.95;selectedVoiceName=d.name||'';
+      var sp=voiceRate<=0.85?'slow':voiceRate>=1.05?'fast':'normal';
+      document.querySelectorAll('.speed-btn').forEach(function(b){b.classList.remove('active');});
+      document.getElementById('sp-'+sp).classList.add('active');
+    }
+  } catch(e) {}
+}
+
+function saveVoice() {
+  var sel=document.getElementById('voiceSelect');
+  if (sel) selectedVoiceName=sel.value;
+  try { localStorage.setItem(VOICE_KEY,JSON.stringify({name:selectedVoiceName,rate:voiceRate})); } catch(e) {}
+}
+
+function setSpeed(rate,id) {
+  voiceRate=rate;
+  document.querySelectorAll('.speed-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('sp-'+id).classList.add('active');
+  saveVoice();
+}
+
+function filterLang(lang,btn) {
+  document.querySelectorAll('.lang-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  populateVoices(lang);
+}
+
+function populateVoices(lang) {
+  if (!window.speechSynthesis) return;
+  var voices=window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  allVoices=voices;
+  var filtered=lang&&lang!=='all'?voices.filter(function(v){return v.lang.startsWith(lang);}):voices;
+  if (!filtered.length) filtered=voices;
+  var priority=['Google UK English Female','Google US English','Google UK English Male','Samantha','Karen','Daniel','Aaron'];
+  var sorted=[...filtered].sort(function(a,b){var ai=priority.indexOf(a.name),bi=priority.indexOf(b.name);if(ai!==-1&&bi!==-1)return ai-bi;if(ai!==-1)return -1;if(bi!==-1)return 1;if(a.name.startsWith('Google')&&!b.name.startsWith('Google'))return -1;if(!a.name.startsWith('Google')&&b.name.startsWith('Google'))return 1;return a.name.localeCompare(b.name);});
+  var sel=document.getElementById('voiceSelect');sel.innerHTML='';
+  sorted.forEach(function(v){var o=document.createElement('option');o.value=v.name;var star=(v.name.startsWith('Google')||priority.includes(v.name))?'★ ':'';o.textContent=star+v.name+(v.lang!=='en-US'?' ('+v.lang+')':'');if(v.name===selectedVoiceName)o.selected=true;sel.appendChild(o);});
+  if (!selectedVoiceName) { var best=sorted.find(function(v){return priority.includes(v.name);})||sorted[0];if(best){selectedVoiceName=best.name;sel.value=best.name;saveVoice();} }
+}
+
+function getVoice() { return window.speechSynthesis.getVoices().find(function(v){return v.name===selectedVoiceName;})||null; }
+
+function speak(text) {
+  if (!window.speechSynthesis||!text) return;
+  window.speechSynthesis.cancel();
+  var u=new SpeechSynthesisUtterance(text);
+  u.rate=voiceRate;u.pitch=1;
+  var v=getVoice();if(v)u.voice=v;
+  u.onstart=function(){isSpeaking=true;updateMicUI(true);updateReadBtn(true);};
+  u.onend=function(){isSpeaking=false;isPreviewing=false;updateMicUI(false);updateReadBtn(false);updatePreviewBtn(false);};
+  u.onerror=function(){isSpeaking=false;isPreviewing=false;updateMicUI(false);updateReadBtn(false);updatePreviewBtn(false);};
+  window.speechSynthesis.speak(u);
+}
+
+function stopSpeech() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  isSpeaking=false;isPreviewing=false;
+  updateMicUI(false);updateReadBtn(false);updatePreviewBtn(false);
+}
+
+function updateMicUI(speaking) {
+  var icon=document.getElementById('micIcon');
+  var btn=document.getElementById('micBtn');
+  if (!icon||!btn) return;
+  if (speaking) {
+    icon.innerHTML='<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>';
+    btn.classList.add('speaking');
+  } else {
+    icon.innerHTML='<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/>';
+    btn.classList.remove('speaking','recording');
+  }
+}
+
+function updateReadBtn(playing) {
+  var btn=document.getElementById('readBtn');var txt=document.getElementById('readTxt');var icon=document.getElementById('readIcon');
+  if(!btn||!txt)return;
+  if(playing){btn.style.background='var(--red)';txt.textContent='Stop';if(icon)icon.innerHTML='<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18">';}
+  else{btn.style.background='var(--accent)';txt.textContent='Read aloud';if(icon)icon.innerHTML='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';}
+}
+
+function updatePreviewBtn(playing) {
+  var btn=document.getElementById('previewBtn');var txt=document.getElementById('previewTxt');
+  if(!btn||!txt)return;
+  if(playing){btn.classList.add('playing');txt.textContent='■ Stop preview';}
+  else{btn.classList.remove('playing');txt.textContent='Preview this voice';}
+}
+
+function toggleRead() {
+  if(isSpeaking){stopSpeech();return;}
+  if(!briefingText){alert('Briefing not loaded yet.');return;}
+  speak(briefingText);
+}
+
+function previewVoice() {
+  if(isSpeaking){stopSpeech();return;}
+  var sel=document.getElementById('voiceSelect');if(sel)selectedVoiceName=sel.value;saveVoice();
+  isPreviewing=true;updatePreviewBtn(true);
+  speak('Agent Wisdom is a thinking coach for your financial life. The quality of your decisions matters more than the information you consume.');
+}
+
+function toggleMic() {
+  if(isSpeaking){stopSpeech();return;}
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){document.getElementById('voiceHint').textContent='Voice not supported. Use Chrome.';return;}
+  if(isRecording){recognition.stop();return;}
+  recognition=new SR();recognition.lang='en-US';recognition.interimResults=true;recognition.continuous=false;
+  recognition.onstart=function(){isRecording=true;var btn=document.getElementById('micBtn');btn.classList.add('recording');document.getElementById('voiceHint').textContent='Listening — speak now...';};
+  recognition.onresult=function(e){document.getElementById('msgInput').value=Array.from(e.results).map(function(r){return r[0].transcript;}).join('');};
+  recognition.onend=function(){isRecording=false;var btn=document.getElementById('micBtn');btn.classList.remove('recording');document.getElementById('voiceHint').textContent='Tap the mic to speak, or type below';var val=document.getElementById('msgInput').value.trim();if(val){document.getElementById('msgInput').value='';callClaude(val);}};
+  recognition.onerror=function(e){isRecording=false;document.getElementById('micBtn').classList.remove('recording');document.getElementById('voiceHint').textContent='Mic error: '+e.error;};
+  recognition.start();
+}
+
+// ═══════════════════════════
+// RESPONSE DEPTH
+// ═══════════════════════════
+function setLen(len) {
+  answerLength=len;
+  document.querySelectorAll('.length-btn').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('len-'+len).classList.add('active');
+  try{localStorage.setItem(LEN_KEY,len);}catch(e){}
+}
+
+function loadLen() {
+  try{var s=localStorage.getItem(LEN_KEY);if(s&&['short','medium','long'].includes(s)){answerLength=s;document.querySelectorAll('.length-btn').forEach(function(b){b.classList.remove('active');});document.getElementById('len-'+s).classList.add('active');}}catch(e){}
+}
+
+// ═══════════════════════════
+// FEEDBACK
+// ═══════════════════════════
+function rate(btn,val) {
+  quickRating=val;
+  document.querySelectorAll('.rating-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+
+function submitFb() {
+  var text=document.getElementById('fbText').value.trim();
+  if(!quickRating&&!text){alert('Please select a rating or add a comment.');return;}
+  try{var e=JSON.parse(localStorage.getItem('aw_feedback')||'[]');e.push({rating:quickRating,comment:text,sessions:sessionCount,score:wisdomScore,date:new Date().toISOString()});localStorage.setItem('aw_feedback',JSON.stringify(e));}catch(e){}
+  document.getElementById('fbText').value='';
+  document.querySelectorAll('.rating-btn').forEach(function(b){b.classList.remove('active');});
+  quickRating='';
+  document.getElementById('fbThanks').style.display='block';
+  setTimeout(function(){document.getElementById('fbThanks').style.display='none';},4000);
+}
+
+// ═══════════════════════════
+// BOOT
+// ═══════════════════════════
+window.addEventListener('DOMContentLoaded', function() {
+  loadKey();
+  loadVault();
+  loadVoiceSettings();
+  loadLen();
+  initTOD();
+  updateMemBanner();
+  generateBrief();
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged=function(){populateVoices('all');};
+    populateVoices('all');
+  }
+  window.speechSynthesis && window.speechSynthesis.getVoices();
+  try {
+    var ob=localStorage.getItem(OB_KEY);
+    if (ob) { var d=JSON.parse(ob);baselineAnswer=d.baseline||null; }
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
